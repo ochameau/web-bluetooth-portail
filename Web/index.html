@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Lego BLE Controller</title>
+	<meta name="description" content="">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+	<meta name="mobile-web-app-capable" content="yes">	
+	<style>
+		body{
+			font-family: Helvetica;
+			text-align:center;
+			width:100%;
+			height:100%;
+			overflow-x: hidden; 
+			overflow-y: hidden;			
+		}
+
+		/*range slider styles*/
+		input[type=range] {
+			-webkit-appearance: none;
+			width: 100%;
+			margin: 13.8px 0;
+		}
+		input[type=range]:focus {
+			outline: none;
+		}
+		input[type=range]::-webkit-slider-runnable-track {
+			width: 100%;
+			height: 8.4px;
+			cursor: pointer;
+			box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+			background: #3071a9;
+			border-radius: 1.3px;
+			border: 0.2px solid #010101;
+		}
+		input[type=range]::-webkit-slider-thumb {
+			box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+			border: 1px solid #000000;
+			border-radius:50px;
+			height: 50px;
+			width: 50px;
+			background: #ffffff;
+			cursor: pointer;
+			-webkit-appearance: none;
+			margin-top: -14px;
+		}
+		input[type=range]:focus::-webkit-slider-runnable-track {
+			background: #367ebd;
+		}
+
+		#m1{
+			-webkit-transform:rotate(90deg);
+			width:40%;
+			position:absolute;
+			top:50%;
+			left:5%;
+		}
+		#m2{
+			width:40%;
+			position:absolute;
+			top:50%;
+			right:10%;			
+		}
+
+		button{
+			margin-top:10px;
+			width:200px;
+			height:50px;
+			font-size:20px;
+			border-radius:5px;
+			border:5px solid #000;
+			background-color: #FFF;
+			outline: none;
+		}
+
+		#connect:active{
+			border-color:#CCC;
+		}
+	</style>
+</head>
+<body>
+	<button id="connect">Connect</button>
+	<br>
+	<button id="open" disabled="true">Open</button>
+  <button id="close" disabled="true">Close</button>
+	<script>
+		//BLE
+		const service        	= 0xFFE0; //0000ffe0-0000-1000-8000-00805f9b34fb HM-10 service UUID
+		const characteristic 	= 0xFFE1; //0000ffe1-0000-1000-8000-00805f9b34fb HM-10 characteristic UUID
+		let characteristicInstance;
+
+		let connectBtn = document.getElementById('connect');
+		let openBtn  = document.getElementById('open');
+		let closeBtn = document.getElementById('close');
+
+		window.onload = () => {
+			if(!navigator.bluetooth){
+				alert('Your current browser does not support web bluetooth or is not enabled. Please use the latest version of Chrome and enable Web Bluetooth under chrome://flags');
+				connectBtn.disabled = true;
+			}
+			connectBtn.onclick = connectBLE;
+      openBtn.onclick = sendCommand.bind(null, "a");
+      closeBtn.onclick = sendCommand.bind(null, "b");
+		}
+
+		function connectBLE(){
+			//BLE setup. Connect and get service/characteristic notifications
+			navigator.bluetooth.requestDevice({ filters: [{ services: [service] }] })
+			.then(device => device.gatt.connect())
+			.then(server => server.getPrimaryService(service))
+			.then(service => service.getCharacteristic(characteristic))
+			.then(characteristic => {
+				characteristicInstance = characteristic;
+        openBtn.disabled = false;
+        closeBtn.disabled = false;
+			})
+			.catch(error => { console.log(error); });
+		}
+
+		function str2ab(str){
+			let buf = new ArrayBuffer(str.length*2); // 2 bytes for each char
+			let bufView = new Uint8Array(buf); //make sure buffer array is of type uint8
+			for (let i=0, strLen=str.length; i < strLen; i++) {
+				bufView[i] = str.charCodeAt(i);
+			}
+			return buf;
+		}
+
+		function sendCommand(command) {
+      try {
+        characteristicInstance.writeValue(str2ab(command));
+      } catch(e) {
+        alert("error: "+e);
+      }
+		}
+		
+	</script>
+</body>
+</html>
