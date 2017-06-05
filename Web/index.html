@@ -101,11 +101,12 @@
 				connectBtn.disabled = true;
 			}
 			connectBtn.onclick = connectBLE;
-      openBtn.onclick = sendCommand.bind(null, "a");
-      closeBtn.onclick = sendCommand.bind(null, "b");
+		        openBtn.onclick = sendCommand.bind(null, "a");
+		        closeBtn.onclick = sendCommand.bind(null, "b");
 		}
 
 		function connectBLE(){
+			try {
 			//BLE setup. Connect and get service/characteristic notifications
 			navigator.bluetooth.requestDevice({ filters: [{ services: [service] }] })
 			.then(device => device.gatt.connect())
@@ -113,10 +114,13 @@
 			.then(service => service.getCharacteristic(characteristic))
 			.then(characteristic => {
 				characteristicInstance = characteristic;
-        openBtn.disabled = false;
-        closeBtn.disabled = false;
+				openBtn.disabled = false;
+				closeBtn.disabled = false;
 			})
-			.catch(error => { console.log(error); });
+			.catch(error => { alert("error:" + error); });
+			} catch(e) {
+				alert("exception:" + e);
+			}
 		}
 
 		function str2ab(str){
